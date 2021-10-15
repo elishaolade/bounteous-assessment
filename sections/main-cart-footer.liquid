@@ -84,23 +84,24 @@
     constructor() {
       super();
       this.error = this.querySelector('.cart-note__error');
+      this.isError = false;
+      this.remaining = 0;
+      this.isCharOverflow = false;
       this.addEventListener('keyup', debounce((event) => {
-        let text;
+
         if(event.target.value.length > 0) {
-          if(event.target.value.length % 50 == 0) {
-            this.error.innerHTML = 'Max per line characters is 50.'
+          if(event.target.value.length > 50) {
+            this.error.innerHTML = 'You have exceeded 50 characters per line';
           }
           else {
-            if(event.code === 'Enter'){
-              this.error.innerHTML = '';
-            }
+            this.error.innerHTML = '';
           }
-          console.log(event.target.value.length);
         }
 
         const body = JSON.stringify({ note: event.target.value });
         fetch(`${routes.cart_update_url}`, {...fetchConfig(), ...{ body }});
       }, 300))
+      
     }
   }
 
