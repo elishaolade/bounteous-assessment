@@ -98,55 +98,61 @@
       this.textarea = this.querySelector('textarea');
       this.isError = false;
       this.count = 0;
-      this.lines = 0;
+      this.lines = 1;
       this.reset = false;
       this.content = '';
       this.textarea.value = '';
-      this.addEventListener('keyup', debounce((event) => {
+      this.addEventListener('keydown', debounce((event) => {
         this.count = event.target.value.length < 50 ? event.target.value.length : event.target.value.length % 50;
         this.reset = this.count == 49 ? true : false;
         let left = 49 - this.count;
         console.log(this.count, this.reset);
+        if(event.code === 'Enter') {
+          this.lines += event.target.value.length != 0 ? 1: 0;
+        }
+        else {
+          if(left == 0) {
+            this.error.innerHTML = 'Please press enter for new line';
+            this.textarea.classList.add('error');
+            this.context.innerHTML = '';
+            event.target.value += '';
+            this.reset = true;
+          }
+          else if(left > 0) {
+            this.error.innerHTML = '';
+            this.textarea.classList.remove('error');
+            this.context.innerHTML = `${left} left for line ${this.lines}`
+            if(event.target.value.length > 50 && this.reset) {
+              this.error.innerHTML = 'Text overflow for line';
+              this.textarea.classList.add('error');
+              this.context.innerHTML = '';
+            }
+          }
+          else if(this.reset) {
+            this.error.innerHTML = 'Please press enter for new line';
+            this.textarea.classList.add('error');
+            this.context.innerHTML = '';
+            event.target.value += '';
+            this.reset = true;
+            if(event.code === 'Enter') {
+              this.reset = false;
+              this.error.innerHTML = '';
+              this.textarea.classList.remove('error');
+              this.context.innerHTML = `${left} left for line ${this.lines}`
+            }
+          }
+        }
         if(event.target.value.length == 200) {
           this.error.innerHTML = 'You have reached the 200 character limit';
           this.textarea.disabled = 'true';
         }
-        if(left == 0) {
-          this.error.innerHTML = 'Please press enter for new line';
-          this.textarea.classList.add('error');
-          this.context.innerHTML = '';
-          event.target.value += '';
-          this.reset = true;
-        }
-        else if(left > 0) {
-          this.error.innerHTML = '';
-          this.textarea.classList.remove('error');
-          this.context.innerHTML = `${left} left for line`
-          if(event.target.value.length > 50 && this.reset) {
-            this.error.innerHTML = 'Text overflow for line';
-            this.textarea.classList.add('error');
-            this.context.innerHTML = '';
-          }
-        }
-        else if(this.reset) {
-          this.error.innerHTML = 'Please press enter for new line';
-          this.textarea.classList.add('error');
-          this.context.innerHTML = '';
-          event.target.value += '';
-          this.reset = true;
-          if(event.code === 'Enter') {
-            this.reset = false;
-            this.error.innerHTML = '';
-            this.textarea.classList.remove('error');
-            this.context.innerHTML = `${left} left for line.`
-          }
-        }
+
         
 
         
         const body = JSON.stringify({ note: event.target.value });
         fetch(`${routes.cart_update_url}`, {...fetchConfig(), ...{ body }});
-      }, 300))
+      }, 200))
       
     }
   }
