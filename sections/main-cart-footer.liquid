@@ -9,8 +9,9 @@
       {%- if section.settings.show_cart_note -%}
         <cart-note class="cart__note field">
           <label for="Cart-note">{{ 'sections.cart.note' | t }}</label>
-          <textarea class="text-area text-area--resize-vertical field__input" name="note" id="Cart-note" placeholder="{{ 'sections.cart.note' | t }}">{{ cart.note }}</textarea>
+          <textarea class="text-area text-area--resize-vertical field__input" name="note" id="Cart-note" placeholder="{{ 'sections.cart.note' | t }}" rows="4" cols="50">{{ cart.note }}</textarea>
           <div class="cart-note__error"></div>
+          <div class="cart-note__count"></div>
         </cart-note>
       {%- endif -%}
 
@@ -72,7 +73,6 @@
               {%- endif -%}
           {%- endcase -%}
         {% endfor %}
-
         <div id="cart-errors"></div>
       </div>
     </div>
@@ -83,8 +83,8 @@
     color: rgba(197, 0, 22, 1);
   }
   *.error:focus-visible {
-    outline: 0.2rem solid rgba(197, 0, 22, .5);
-    outline-offset: 0.3rem;
+    {% comment %} outline: 0.2rem solid rgba(197, 0, 22, .5);
+    outline-offset: 0.3rem; {% endcomment %}
     box-shadow: 0 0 0 0.3rem rgba(197, 0, 22, .5),
       0 0 0.5rem 0.4rem rgba(197, 0, 22, .3);
   }
@@ -94,24 +94,56 @@
     constructor() {
       super();
       this.error = this.querySelector('.cart-note__error');
+      this.context = this.querySelector('.cart-note__count');
       this.textarea = this.querySelector('textarea');
       this.isError = false;
-      this.remaining = 0;
-      this.isCharOverflow = false;
+      this.count = 0;
+      this.lines = 0;
+      this.reset = false;
+      this.content = '';
+      this.textarea.value = '';
       this.addEventListener('keyup', debounce((event) => {
-
-        if(event.target.value.length > 0) {
-          if(event.target.value.length > 50) {
-            this.error.innerHTML = 'You have exceeded 50 characters per line';
-            console.log(this.textarea);
+        this.count = event.target.value.length < 50 ? event.target.value.length : event.target.value.length % 50;
+        this.reset = this.count == 49 ? true : false;
+        let left = 49 - this.count;
+        console.log(this.count, this.reset);
+        if(event.target.value.length == 200) {
+          this.error.innerHTML = 'You have reached the 200 character limit';
+          this.textarea.disabled = 'true';
+        }
+        if(left == 0) {
+          this.error.innerHTML = 'Please press enter for new line';
+          this.textarea.classList.add('error');
+          this.context.innerHTML = '';
+          event.target.value += '';
+          this.reset = true;
+        }
+        else if(left > 0) {
+          this.error.innerHTML = '';
+          this.textarea.classList.remove('error');
+          this.context.innerHTML = `${left} left for line`
+          if(event.target.value.length > 50 && this.reset) {
+            this.error.innerHTML = 'Text overflow for line';
             this.textarea.classList.add('error');
-          }
-          else {
-            this.error.innerHTML = '';
-            this.textarea.classList.remove('error');
+            this.context.innerHTML = '';
           }
         }
+        else if(this.reset) {
+          this.error.innerHTML = 'Please press enter for new line';
+          this.textarea.classList.add('error');
+          this.context.innerHTML = '';
+          event.target.value += '';
+          this.reset = true;
+          if(event.code === 'Enter') {
+            this.reset = false;
+            this.error.innerHTML = '';
+            this.textarea.classList.remove('error');
+            this.context.innerHTML = `${left} left for line.`
+          }
+        }
+        
 
+        
         const body = JSON.stringify({ note: event.target.value });
         fetch(`${routes.cart_update_url}`, {...fetchConfig(), ...{ body }});
       }, 300))
