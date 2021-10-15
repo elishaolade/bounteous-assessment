@@ -78,12 +78,23 @@
     </div>
   </div>
 </div>
-
+{% style %}
+  .cart-note__error {
+    color: rgba(197, 0, 22, 1);
+  }
+  *.error:focus-visible {
+    outline: 0.2rem solid rgba(197, 0, 22, .5);
+    outline-offset: 0.3rem;
+    box-shadow: 0 0 0 0.3rem rgba(197, 0, 22, .5),
+      0 0 0.5rem 0.4rem rgba(197, 0, 22, .3);
+  }
+{% endstyle %}
 {% javascript %}
   class CartNote extends HTMLElement {
     constructor() {
       super();
       this.error = this.querySelector('.cart-note__error');
+      this.textarea = this.querySelector('textarea');
       this.isError = false;
       this.remaining = 0;
       this.isCharOverflow = false;
@@ -92,9 +103,12 @@
         if(event.target.value.length > 0) {
           if(event.target.value.length > 50) {
             this.error.innerHTML = 'You have exceeded 50 characters per line';
+            console.log(this.textarea);
+            this.textarea.classList.add('error');
           }
           else {
             this.error.innerHTML = '';
+            this.textarea.classList.remove('error');
           }
         }
 
